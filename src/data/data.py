@@ -1,5 +1,4 @@
 from typing import List
-import matplotlib.pyplot as plt
 import pandas
 import torch
 
@@ -58,6 +57,7 @@ def get_dev_loader():
 
 
 def plot(data: SERDataset = SERDataset(train_dataset_path, train=True), data_points: List[int] = None):
+    import matplotlib.pyplot as plt
     if data_points is None:
         data_points = [0, 1, 2, 3]
     for data_point in data_points:

@@ -50,7 +50,7 @@ def get_train_loader():
 def get_dev_loader():
     print("Loading development data...")
     dev_loader = torch.utils.data.DataLoader(
-        dataset=SERDataset(dev_dataset_path),
+        dataset=SERDataset(dev_dataset_path, return_labels=False),
         batch_size=batch_size,
         shuffle=False
     )

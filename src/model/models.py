@@ -48,8 +48,8 @@ def train(model, optimizer, train_data, dev_data, num_epochs, report_intermediat
             optimizer.step()
 
             if report_intermediate_accuracy and i % (len(train_data) / 10) == 0:
-                accuracy = evaluate(model, dev_data)
-                print(f"Loss: {loss.item()} \t Accuracy: {accuracy}")
+                #accuracy = evaluate(model, dev_data)
+                print(f"Loss: {loss.item()}") # \t Accuracy: {accuracy}")
     return loss
 
 

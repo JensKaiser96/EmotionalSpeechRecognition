@@ -20,9 +20,9 @@ dev_dataset_path = dataset_path + "dev.json"
 
 
 class SERDataset(torch.utils.data.Dataset):
-    def __init__(self, path, train):
+    def __init__(self, path, return_labels=True):
         self.data_frame = pandas.read_json(path)
-        self.train = train
+        self.return_labels = return_labels
 
     def __len__(self):
         return self.data_frame.shape[1]
@@ -30,8 +30,9 @@ class SERDataset(torch.utils.data.Dataset):
     def __getitem__(self, item):
         data_point = self.data_frame[item]
         features = torch.tensor(data_point[FEATURES])
-        if self.train:
-            return features, torch.tensor([data_point[VALENCE], data_point[ACTIVATION]], dtype=torch.float)
+        if self.return_labels:
+            labels = torch.tensor([data_point[VALENCE], data_point[ACTIVATION]], dtype=torch.float)
+            return features, labels
         else:
             return features
 
@@ -39,7 +40,7 @@ class SERDataset(torch.utils.data.Dataset):
 def get_train_loader():
     print("Loading training data...")
     train_loader = torch.utils.data.DataLoader(
-        dataset=SERDataset(train_dataset_path, train=True),
+        dataset=SERDataset(train_dataset_path),
         batch_size=batch_size,
         shuffle=True
     )
@@ -49,14 +50,14 @@ def get_train_loader():
 def get_dev_loader():
     print("Loading development data...")
     dev_loader = torch.utils.data.DataLoader(
-        dataset=SERDataset(dev_dataset_path, train=False),
+        dataset=SERDataset(dev_dataset_path),
         batch_size=batch_size,
         shuffle=False
     )
     return dev_loader
 
 
-def plot(data: SERDataset = SERDataset(train_dataset_path, train=True), data_points: List[int] = None):
+def plot(data: SERDataset = SERDataset(train_dataset_path), data_points: List[int] = None):
     import matplotlib.pyplot as plt
     if data_points is None:
         data_points = [0, 1, 2, 3]

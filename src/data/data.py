@@ -1,4 +1,3 @@
-from typing import List
 import pandas
 import torch
 
@@ -9,7 +8,7 @@ VALENCE = "valence"
 ACTIVATION = "activation"
 FEATURES = "features"
 
-batch_size = 1
+batch_size = 256
 
 if __name__ != "__main__":
     dataset_path = "./data/"
@@ -30,12 +29,22 @@ class SERDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, item):
         data_point = self.data_frame[item]
-        features = torch.tensor(data_point[FEATURES])
+        mean = torch.tensor(data_point[FEATURES]).mean(dim=0)
+        var = torch.tensor(data_point[FEATURES]).var(dim=0)
+        features = torch.cat((mean, var))
+        #pad = 1707 - len(data_point[FEATURES])
+        #features = torch.nn.functional.pad(features, (0, 0, 0, pad))
         if self.return_labels:
             labels = torch.tensor([data_point[VALENCE], data_point[ACTIVATION]], dtype=torch.float)
             return features, labels
         else:
             return features
+
+
+def collate_fn(batch):
+    # batch = [(features, label), (f2, l2), ...]
+    lens = [feature.shape[0] for feature, label in batch]
+    max_len = max(lens)
 
 
 def get_train_loader(small=False):
@@ -47,7 +56,8 @@ def get_train_loader(small=False):
     train_loader = torch.utils.data.DataLoader(
         dataset=SERDataset(dataset_path),
         batch_size=batch_size,
-        shuffle=True
+        shuffle=True,
+        #collate_fn=collate_fn
     )
     return train_loader
 
@@ -62,7 +72,7 @@ def get_dev_loader():
     return dev_loader
 
 
-def plot(data: SERDataset = SERDataset(train_dataset_path), data_points: List[int] = None):
+def plot(data: SERDataset = SERDataset(train_dataset_path), data_points = None):
     import matplotlib.pyplot as plt
     if data_points is None:
         data_points = [0, 1, 2, 3]

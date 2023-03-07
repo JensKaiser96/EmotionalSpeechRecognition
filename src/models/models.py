@@ -49,7 +49,7 @@ class CNNModel2(torch.nn.Module):
         super().__init__()
         self.cnn = nn.Sequential(
             nn.Conv2d(1, 1, kernel_size=(25, 1)),
-            nn.ReLU(),
+            nn.RReLU(),
             nn.MaxPool2d((5, 3), 1),
 
             #nn.Conv2d(1, 1, kernel_size=(10, 1)),
@@ -67,7 +67,7 @@ class CNNModel2(torch.nn.Module):
         assert acnn.shape[0] == batch_size
         assert acnn.shape[2] == 24
         h_lstm, _ = self.lstm(acnn)
-        h_lstm = h_lstm[:, -1, :]
+        h_lstm = h_lstm.mean(dim=1)
         #print(f"{h_lstm.shape=}")
         h_linear = self.linear(h_lstm)
         #print(f"{h_linear.shape}")

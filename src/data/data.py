@@ -16,6 +16,7 @@ if __name__ != "__main__":
 else:
     dataset_path = "./../../data/"
 train_dataset_path = dataset_path + "train.json"
+small_train_dataset_path = dataset_path + "first1k_train.json"
 dev_dataset_path = dataset_path + "dev.json"
 
 
@@ -37,10 +38,14 @@ class SERDataset(torch.utils.data.Dataset):
             return features
 
 
-def get_train_loader():
+def get_train_loader(small=False):
     print("Loading training data...")
+    if small:
+        dataset_path = small_train_dataset_path
+    else:
+        dataset_path = train_dataset_path
     train_loader = torch.utils.data.DataLoader(
-        dataset=SERDataset(train_dataset_path),
+        dataset=SERDataset(dataset_path),
         batch_size=batch_size,
         shuffle=True
     )

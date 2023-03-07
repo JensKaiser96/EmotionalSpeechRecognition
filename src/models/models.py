@@ -82,23 +82,23 @@ class CNNModel2(torch.nn.Module):
             #nn.MaxPool2d((3, 3), 1),
         )
         self.lstm = nn.LSTM(26, 64, bidirectional=False, batch_first=True)
-        self.linear = nn.Linear(24, 2)
+        self.linear = nn.Linear(64, 2)
 
     def forward(self, x):
         #print(f"{x.shape=}")
         # x.shape = (fix<batch_size>, var<sequence_length>, fix<features, 26>)
-        acnn = self.cnn(x)  # want shape (fix<batch_size>, var<sequence_length*?>, fix<features-?, 24>)
-        acnnm = acnn.mean(dim=1)
-        h_linear = self.linear(acnnm)
+        #acnn = self.cnn(x)  # want shape (fix<batch_size>, var<sequence_length*?>, fix<features-?, 24>)
+        #acnnm = acnn.mean(dim=1)
+        #h_linear = self.linear(acnnm)
         #print(f"{acnn.shape=}")
         #assert acnn.shape[0] == batch_size
         #assert acnn.shape[2] == 24
-        #h_lstm, _ = self.lstm(x)
-        #h_lstm = h_lstm.mean(dim=1)
+        h_lstm, _ = self.lstm(x)
+        h_lstm = h_lstm.mean(dim=1)
         #print(f"{h_lstm.shape=}")
-        #h_linear = self.linear(h_lstm)
+        h_linear = self.linear(h_lstm)
         #print(f"{h_linear.shape}")
-        assert h_linear.shape == (1, 2)
+        #assert h_linear.shape == (1, 2)
         return nn.Sigmoid()(h_linear)
 
 
@@ -118,19 +118,17 @@ def simple_lstm(learning_rate: float = 0.1):
 
 def train(model, optimizer, train_data, num_epochs, report_intermediate_accuracy=True, path=""):
     for epoch in range(num_epochs):
+        losses = []
         for i, (mel_spec_features, labels) in enumerate(progress_bar := tqdm(train_data, desc="Training Model:")):
             outputs = model(mel_spec_features)
             loss = torch.nn.functional.cross_entropy(outputs, labels)
             model.zero_grad()
             loss.backward()
             optimizer.step()
-
-            if report_intermediate_accuracy and i % (len(train_data) / 10) == 0:
-                print(f"Loss: {loss.item()}")  # \t Accuracy: {accuracy}")
-        print(f"Loss: {loss.item()}")
-    if path:
-        torch.save(model.state_dict(), path)
-    return loss
+            losses.append(loss.item())
+        print(f"Loss: {sum(losses)/len(losses)}")
+        if path:
+            torch.save(model.state_dict(), path)
 
 
 @torch.no_grad()

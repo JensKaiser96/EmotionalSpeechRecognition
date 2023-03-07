@@ -20,20 +20,22 @@ dev_dataset_path = dataset_path + "dev.json"
 
 
 class SERDataset(torch.utils.data.Dataset):
-    def __init__(self, path, return_labels=True):
+    def __init__(self, path, return_labels=True, simple=False):
         self.data_frame = pandas.read_json(path)
         self.return_labels = return_labels
+        self.simple = simple
 
     def __len__(self):
         return self.data_frame.shape[1]
 
     def __getitem__(self, item):
         data_point = self.data_frame[item]
-        mean = torch.tensor(data_point[FEATURES]).mean(dim=0)
-        var = torch.tensor(data_point[FEATURES]).var(dim=0)
-        features = torch.cat((mean, var))
-        #pad = 1707 - len(data_point[FEATURES])
-        #features = torch.nn.functional.pad(features, (0, 0, 0, pad))
+        if self.simple:
+            mean = torch.tensor(data_point[FEATURES]).mean(dim=0)
+            var = torch.tensor(data_point[FEATURES]).var(dim=0)
+            features = torch.cat((mean, var))
+        else:
+            features = data_point[FEATURES]
         if self.return_labels:
             labels = torch.tensor([data_point[VALENCE], data_point[ACTIVATION]], dtype=torch.float)
             return features, labels
@@ -43,8 +45,10 @@ class SERDataset(torch.utils.data.Dataset):
 
 def collate_fn(batch):
     # batch = [(features, label), (f2, l2), ...]
-    lens = [feature.shape[0] for feature, label in batch]
-    max_len = max(lens)
+    features = [torch.tensor(feature) for feature, _ in batch]
+    labels = [label for _, label in batch]
+    t_features = torch.nn.utils.rnn.pad_sequence(features, batch_first=True)
+    return t_features, torch.stack(labels)
 
 
 def get_train_loader(small=False):
@@ -57,7 +61,7 @@ def get_train_loader(small=False):
         dataset=SERDataset(dataset_path),
         batch_size=batch_size,
         shuffle=True,
-        #collate_fn=collate_fn
+        collate_fn=collate_fn
     )
     return train_loader
 
@@ -84,8 +88,3 @@ def plot(data: SERDataset = SERDataset(train_dataset_path), data_points = None):
         ax.set_title(f"{val=}, {act=}")
 
         plt.show()
-
-
-if __name__ == '__main__':
-    dataset_path = "./../../data/"
-    plot()

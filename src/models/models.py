@@ -102,6 +102,33 @@ class CNNModel2(torch.nn.Module):
         return nn.Sigmoid()(h_linear)
 
 
+class LSTMBigModel(torch.nn.Module):
+    def __init__(self):
+        super(LSTMBigModel, self).__init__()
+        self.lstm1 = torch.nn.LSTM(
+            input_size=26,
+            hidden_size=32,
+            bidirectional=True,
+            batch_first=True
+        )
+        self.lstm2 = torch.nn.LSTM(
+            input_size=64,
+            hidden_size=16,
+            bidirectional=True,
+            batch_first=True
+        )
+        self.linear1 = torch.nn.Linear(in_features=32, out_features=16)
+        self.linear2 = torch.nn.Linear(in_features=16, out_features=2)
+
+    def forward(self, x):
+        h_lstm1, _ = self.lstm1(x)
+        h_lstm2, _ = self.lstm2(h_lstm1)
+        h_mean = h_lstm2.mean(dim=1)
+        h_linear1 = self.linear1(h_mean)
+        h_linear2 = self.linear2(h_linear1)
+        return torch.nn.Sigmoid()(h_linear2)
+
+
 def simple_lstm(learning_rate: float = 0.1):
     print("Creating simple LSTM model...")
     model = LSTMModel(

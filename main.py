@@ -3,6 +3,7 @@ import torch
 from src.models.models import train, annotate, CNNModel2, LinearModel
 from src.data.data import get_train_loader, get_dev_loader
 
+
 def main():
     # model, optimizer = simple_lstm(0.025)
     print("loading model")

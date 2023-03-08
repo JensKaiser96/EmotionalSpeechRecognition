@@ -17,6 +17,7 @@ else:
 train_dataset_path = dataset_path + "train.json"
 small_train_dataset_path = dataset_path + "first1k_train.json"
 dev_dataset_path = dataset_path + "dev.json"
+test_dataset_path = dataset_path + "test.json"
 
 
 class SERDataset(torch.utils.data.Dataset):
@@ -43,15 +44,14 @@ class SERDataset(torch.utils.data.Dataset):
             return features
 
 
-def collate_fn(batch):
-    # batch = [(features, label), (f2, l2), ...]
-    features = [torch.tensor(feature) for feature, _ in batch]
-    labels = [label for _, label in batch]
-    t_features = torch.nn.utils.rnn.pad_sequence(features, batch_first=True)
-    return t_features, torch.stack(labels)
-
-
 def get_train_loader(small=False):
+    def collate_fn(batch):
+        # batch = [(features, label), (f2, l2), ...]
+        features = [torch.tensor(feature) for feature, _ in batch]
+        labels = [label for _, label in batch]
+        t_features = torch.nn.utils.rnn.pad_sequence(features, batch_first=True)
+        return t_features, torch.stack(labels)
+
     print("Loading training data...")
     if small:
         dataset_path = small_train_dataset_path
@@ -66,12 +66,20 @@ def get_train_loader(small=False):
     return train_loader
 
 
-def get_dev_loader():
+def get_dev_loader(test=False):
+    def collate_fn(batch):
+        return torch.nn.utils.rnn.pad_sequence([torch.tensor(f) for f in batch], batch_first=True)
+
+    if test:
+        dataset_path = dev_dataset_path
+    else:
+        dataset_path = test_dataset_path
     print("Loading development data...")
     dev_loader = torch.utils.data.DataLoader(
-        dataset=SERDataset(dev_dataset_path, return_labels=False),
+        dataset=SERDataset(dataset_path, return_labels=False),
         batch_size=1,
-        shuffle=False
+        shuffle=False,
+        collate_fn=collate_fn
     )
     return dev_loader
 

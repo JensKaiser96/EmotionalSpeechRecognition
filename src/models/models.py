@@ -163,8 +163,8 @@ def annotate(model, data, path):
     buffer = {}
     for i, mel_spec_features in enumerate(data):
         output = model(mel_spec_features)
-        valence = float(output[0, 0])
-        activation = float(output[0, 1])
+        valence = int(output[0, 0])
+        activation = int(output[0, 1])
         buffer[i] = {"valence": valence, "activation": activation}
     with open(path, mode="w", encoding="utf-8") as f_out:
         json.dump(buffer, f_out)
